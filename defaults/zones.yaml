@@ -1,0 +1,37 @@
+# Edited from the Zones page of the web UI (or by hand; the tracker reloads it on change).
+# PLACEHOLDER coordinates. Verify against the current NOAA chart / pilot notices.
+bounding_box:
+- - 33.35
+  - -118.65
+- - 33.85
+  - -118.0
+zones:
+  pilot_station:
+    label: LA/LB Pilot Station
+    type: circle
+    center:
+    - 33.62
+    - -118.26
+    radius_nm: 1.5
+    inbound:
+      reference:
+      - 33.705
+      - -118.25
+      tolerance_deg: 60
+  port_limits:
+    label: LA/LB port limits
+    type: polygon
+    points:
+    - - 33.745
+      - -118.3
+    - - 33.745
+      - -118.13
+    - - 33.68
+      - -118.13
+    - - 33.68
+      - -118.3
+    inbound:
+      reference:
+      - 33.745
+      - -118.22
+      tolerance_deg: 75

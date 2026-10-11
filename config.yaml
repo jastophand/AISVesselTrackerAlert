@@ -1,0 +1,48 @@
+# --- Vessel alert config ---
+# Everything here is driven by environment variables, written ${NAME} or
+# ${NAME:-default}. Set them in .env or in Portainer's stack environment screen.
+# Vessels, people and zones are managed in the web UI (or the Telegram bot) and
+# live in the data volume.
+
+aisstream_api_key: ${AISSTREAM_API_KEY}
+timezone: ${TIMEZONE:-America/Los_Angeles}
+watchlist_file: data/vessels.csv
+contacts_file: data/contacts.yaml
+zones_file: data/zones.yaml
+state_db: data/state.db
+health_file: data/health.json
+
+# Alert behavior
+cooldown_hours: ${COOLDOWN_HOURS:-12}   # don't re-alert the same vessel/zone inside this window
+alert_on_first_sight: false             # false = a vessel already inside a zone at startup stays quiet
+always_notify: []                       # better: tick "every alert" on a person in the web UI
+min_speed_knots: ${MIN_SPEED_KNOTS:-2.0}  # below this, course is ignored for the inbound check
+
+# AIS feed. false = take every ship in the area box and filter here, which keeps
+# the feed busy so silence reliably means trouble. true = let AISStream filter
+# (max 50 vessels, all with an MMSI).
+use_mmsi_filter: false
+
+# Health checks (alerts go to people with "system health alerts" ticked)
+feed_silence_minutes: ${FEED_SILENCE_MINUTES:-10}          # connected but no position reports
+disconnect_alert_minutes: ${DISCONNECT_ALERT_MINUTES:-5}   # not connected
+send_failures_before_alert: 3                              # failed sends/checks in a row
+probe_minutes: 5                                           # how often to test email/ntfy/Telegram are reachable
+heartbeat:                                                 # optional external watchdog ping
+  url: ${HEARTBEAT_URL}
+  interval_minutes: ${HEARTBEAT_MINUTES:-5}
+
+smtp:
+  host: ${SMTP_HOST}
+  port: ${SMTP_PORT:-587}
+  security: ${SMTP_SECURITY:-starttls}   # starttls, ssl or none
+  username: ${SMTP_USER}
+  password: ${SMTP_PASS}
+  from: ${SMTP_FROM}
+
+ntfy:
+  server: ${NTFY_SERVER:-https://ntfy.sh}
+  token: ${NTFY_TOKEN}
+
+telegram:
+  bot_token: ${TELEGRAM_BOT_TOKEN}

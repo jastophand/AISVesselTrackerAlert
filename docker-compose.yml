@@ -1,0 +1,61 @@
+# Works with `docker compose up -d --build` and as a Portainer stack.
+# Settings come from environment variables (.env file, or Portainer's
+# "Environment variables" section). Vessels, people and zones live in the
+# vessel_data volume and are managed in the web UI.
+
+x-env: &env
+  AISSTREAM_API_KEY: ${AISSTREAM_API_KEY:?Set AISSTREAM_API_KEY}
+  TIMEZONE: ${TIMEZONE:-America/Los_Angeles}
+  COOLDOWN_HOURS: ${COOLDOWN_HOURS:-12}
+  MIN_SPEED_KNOTS: ${MIN_SPEED_KNOTS:-2.0}
+  FEED_SILENCE_MINUTES: ${FEED_SILENCE_MINUTES:-10}
+  DISCONNECT_ALERT_MINUTES: ${DISCONNECT_ALERT_MINUTES:-5}
+  HEARTBEAT_URL: ${HEARTBEAT_URL:-}
+  HEARTBEAT_MINUTES: ${HEARTBEAT_MINUTES:-5}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURITY: ${SMTP_SECURITY:-starttls}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASS: ${SMTP_PASS:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  NTFY_SERVER: ${NTFY_SERVER:-https://ntfy.sh}
+  NTFY_TOKEN: ${NTFY_TOKEN:-}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+
+services:
+  tracker:
+    build: .
+    image: vessel-alerts:latest
+    restart: unless-stopped
+    command: python main.py
+    environment:
+      <<: *env
+    volumes:
+      - vessel_data:/app/data
+    healthcheck:
+      # Shows "unhealthy" in Portainer if the tracker stops reporting or has a problem
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  web:
+    build: .
+    image: vessel-alerts:latest
+    restart: unless-stopped
+    command: uvicorn web:app --host 0.0.0.0 --port 8080
+    environment:
+      <<: *env
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+    volumes:
+      - vessel_data:/app/data
+    ports:
+      # Login is basic auth, so keep this on your LAN/VPN or behind an HTTPS
+      # reverse proxy. Published on host port 18473 by default; set WEB_PORT to
+      # change it (the container itself always listens on 8080).
+      - "${WEB_PORT:-18473}:8080"
+
+volumes:
+  vessel_data:
